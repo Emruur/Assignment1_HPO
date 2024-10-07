@@ -3083,3 +3083,183 @@ TRANSFORMED X:
 0       0           43  ...                0         1600
 
 [1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       0            3  ...                0         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       1            4  ...                1         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       0           37  ...                1         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       0            9  ...                0         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       1            6  ...                0         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       2           17  ...                0         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       0           27  ...                0         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+     metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0         2            2  ...                0         1600
+1         2            2  ...                1         1600
+2         1           17  ...                0         1600
+3         0           28  ...                0         1600
+4         2           75  ...                0         1600
+..      ...          ...  ...              ...          ...
+143       0           52  ...                0         1600
+144       1           54  ...                0         1600
+145       1            2  ...                1         1600
+146       2           27  ...                1         1600
+147       1           67  ...                0         1600
+
+[148 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       2           23  ...                0         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       2           12  ...                0         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       2           14  ...                0         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       2           25  ...                0         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       2            3  ...                0         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       2            6  ...                0         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       1           99  ...                1         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       0           10  ...                0         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       1            7  ...                1         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       2            5  ...                0         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+     metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0         2            2  ...                0         1600
+1         2            2  ...                1         1600
+2         1           17  ...                0         1600
+3         0           28  ...                0         1600
+4         2           75  ...                0         1600
+..      ...          ...  ...              ...          ...
+144       1           54  ...                0         1600
+145       1            2  ...                1         1600
+146       2           27  ...                1         1600
+147       1           67  ...                0         1600
+148       0           10  ...                0         1600
+
+[149 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       1            8  ...                1         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       1           80  ...                0         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       0           56  ...                1         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       2           10  ...                0         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       0            5  ...                0         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       2            2  ...                0         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       0            1  ...                0         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       1            9  ...                0         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       2            4  ...                0         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+   metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0       2           19  ...                0         1600
+
+[1 rows x 15 columns]
+TRANSFORMED X: 
+     metric  n_neighbors  ...  pp@std_with_std  anchor_size
+0         2            2  ...                0         1600
+1         2            2  ...                1         1600
+2         1           17  ...                0         1600
+3         0           28  ...                0         1600
+4         2           75  ...                0         1600
+..      ...          ...  ...              ...          ...
+145       1            2  ...                1         1600
+146       2           27  ...                1         1600
+147       1           67  ...                0         1600
+148       0           10  ...                0         1600
+149       1           80  ...                0         1600
+
+[150 rows x 15 columns]
