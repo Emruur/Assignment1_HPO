@@ -74,14 +74,12 @@ def main(args):
     # Sample N=100 configurations and create capital_phi
     capital_phi = create_capital_phi(surrogate_model,config_space,args.max_anchor_size, n_samples=100)
 
-    
     # Initialize and fit the SMBO
     smbo = SequentialModelBasedOptimization(config_space, args.max_anchor_size)
 
     smbo.initialize(capital_phi)
     smbo.fit_model()
 
-    
     performance_scores = []
     for _ in range(args.num_iterations):
         # Get the config with most improvement(hopefully)
@@ -89,13 +87,11 @@ def main(args):
         promising_configuration_dict= dict(promising_configuration)
         promising_configuration_dict["anchor_size"]= args.max_anchor_size
 
-
         # "Train" the config and get the score
         config_performance= surrogate_model.predict(promising_configuration_dict)
         performance_scores.append(config_performance)
         smbo.update_runs((promising_configuration, config_performance))
         
-        ## CHAT GPT write code to plot the performance over iterations and CHANGE NOTHIMG ELSE
 
         # Plot the performance over iterations
     plt.figure(figsize=(8, 6))

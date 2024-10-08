@@ -8,6 +8,8 @@ from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 from ConfigConverter import ConfigSpaceTransformer
 from sklearn.model_selection import train_test_split
 
+
+
 import pandas as pd
 from scipy.stats import norm
 
@@ -47,18 +49,23 @@ class SequentialModelBasedOptimization(object):
         error rate)
         """
 
+        # Define the kernel
         kernel = C(1.0, (1e-2, 1e2)) * RBF(1.0, (1e-2, 1e2))
+
+        # Define    the pipeline with scaling
         self.gp_pipeline = Pipeline([
-            ('config_transform', self.config_space_transformer),  # Step 1: Convert config space
-            ('gp', GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=10))  # Step 2: Gaussian Process Regression
+            ('config_transform', self.config_space_transformer),
+            ('gp', GaussianProcessRegressor(
+                kernel=kernel, 
+                n_restarts_optimizer=10))
         ])
+
 
         # Find the tuple with the maximum performance score
         best_run = min(capital_phi, key=lambda x: x[1])
         # Set the configuration with the maximum score
         self.theta_inc = best_run[0]
         self.theta_inc_performance = best_run[1]
-
         self.R= capital_phi
 
     def fit_model(self) -> None:
@@ -83,8 +90,7 @@ class SequentialModelBasedOptimization(object):
         """
         # maximize the acquisition function by random sampling
 
-
-        n_samples = 10
+        n_samples = 1000
         samples = self.config_space.sample_configuration(n_samples)
         ## for some configurations i get none. how is that?
         expected_improvements= SequentialModelBasedOptimization.expected_improvement(self.gp_pipeline, self.theta_inc_performance, samples, self.anchor_size)
@@ -111,6 +117,7 @@ class SequentialModelBasedOptimization(object):
             t_pd= pd.DataFrame([t.get_dictionary()])
             t_pd['anchor_size'] = anchor_size
             mean_x, confidence = model_pipeline.predict(t_pd, return_std=True)
+            mean_x *= -1
             Z= (f_star - mean_x - tradeoff) / confidence
             EI= mean_x - f_star- tradeoff * norm.cdf(Z) + confidence * norm.pdf(Z)
             expected_improvements.append(EI[0])
