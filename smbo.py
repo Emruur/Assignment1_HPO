@@ -90,7 +90,7 @@ class SequentialModelBasedOptimization(object):
         """
         # maximize the acquisition function by random sampling
 
-        n_samples = 1000
+        n_samples = 10_000
         samples = self.config_space.sample_configuration(n_samples)
         ## for some configurations i get none. how is that?
         expected_improvements= SequentialModelBasedOptimization.expected_improvement(self.gp_pipeline, self.theta_inc_performance, samples, self.anchor_size)
