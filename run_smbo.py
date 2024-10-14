@@ -50,8 +50,8 @@ def create_capital_phi(model, config_space, anchor_size,n_samples: int = 100) ->
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config_space_file', type=str, default='/Users/yigitgokalp/Desktop/LEIDEN/autoML/Assignment1Group_HPO/Assignment1_HPO/lcdb_config_space_knn.json')
-    parser.add_argument('--configurations_performance_file', type=str, default='/Users/yigitgokalp/Desktop/LEIDEN/autoML/Assignment1Group_HPO/Assignment1_HPO/lcdb_configs.csv')
+    parser.add_argument('--config_space_file', type=str, default='lcdb_config_space_knn.json')
+    parser.add_argument('--configurations_performance_file', type=str, default='lcdb_configs.csv')
     # max_anchor_size: connected to the configurations_performance_file. The max value upon which anchors are sampled
     parser.add_argument('--max_anchor_size', type=int, default=1600)
     parser.add_argument('--num_iterations', type=int, default=25)
@@ -72,7 +72,9 @@ def main(args):
     surrogate_model.fit(dataset)
     
     # Sample N=100 configurations and create capital_phi
-    capital_phi = create_capital_phi(surrogate_model,config_space,args.max_anchor_size, n_samples=100)
+    #TODO SORU: increasing n_smaples makes stuff weird? 
+    # TODO SORU: weird convergence error 
+    capital_phi = create_capital_phi(surrogate_model,config_space,args.max_anchor_size, n_samples=25)
 
     # Initialize and fit the SMBO
     smbo = SequentialModelBasedOptimization(config_space, args.max_anchor_size)
