@@ -64,8 +64,6 @@ class ConfigSpaceTransformer(BaseEstimator, TransformerMixin):
 
         # During prediction, use complete_defaults=True
         transformed_X= self.converter.transform(X, complete_defaults=True)
-        print("TRANSFORMED X: ")
-        print(transformed_X)
         return transformed_X
 
     def inverse_transform(self, X):

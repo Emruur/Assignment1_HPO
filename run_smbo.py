@@ -91,7 +91,9 @@ def main(args):
         config_performance= surrogate_model.predict(promising_configuration_dict)
         performance_scores.append(config_performance)
         smbo.update_runs((promising_configuration, config_performance))
-        
+        print("DEBUG: ")
+        print(config_performance)
+        print(len(smbo.R))
 
         # Plot the performance over iterations
     plt.figure(figsize=(8, 6))
