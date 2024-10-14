@@ -50,8 +50,8 @@ def create_capital_phi(model, config_space, anchor_size,n_samples: int = 100) ->
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config_space_file', type=str, default='lcdb_config_space_knn.json')
-    parser.add_argument('--configurations_performance_file', type=str, default='lcdb_configs.csv')
+    parser.add_argument('--config_space_file', type=str, default='/Users/yigitgokalp/Desktop/LEIDEN/autoML/Assignment1Group_HPO/Assignment1_HPO/lcdb_config_space_knn.json')
+    parser.add_argument('--configurations_performance_file', type=str, default='/Users/yigitgokalp/Desktop/LEIDEN/autoML/Assignment1Group_HPO/Assignment1_HPO/lcdb_configs.csv')
     # max_anchor_size: connected to the configurations_performance_file. The max value upon which anchors are sampled
     parser.add_argument('--max_anchor_size', type=int, default=1600)
     parser.add_argument('--num_iterations', type=int, default=25)
