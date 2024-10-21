@@ -6,6 +6,7 @@ from typing import List, Tuple, Dict
 from surrogate_model import SurrogateModel
 import argparse
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def read_files(dataset_path: str, config_path: str):
@@ -47,7 +48,6 @@ def create_capital_phi(model, config_space, anchor_size,n_samples: int = 100) ->
     
     return capital_phi
 
-
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_space_file', type=str, default='lcdb_config_space_knn.json')
@@ -73,38 +73,77 @@ def main(args):
     
     # Sample N=100 configurations and create capital_phi
     #TODO SORU: increasing n_smaples makes stuff weird? 
-    # TODO SORU: weird convergence error 
-    capital_phi = create_capital_phi(surrogate_model,config_space,args.max_anchor_size, n_samples=25)
+    all_perf_scores= []
+    results = {
+            'random_search': [1.0]
+    }
+    for i in range(10):
 
-    # Initialize and fit the SMBO
-    smbo = SequentialModelBasedOptimization(config_space, args.max_anchor_size)
+        capital_phi = create_capital_phi(surrogate_model,config_space,args.max_anchor_size, n_samples=25)
 
-    smbo.initialize(capital_phi)
-    smbo.fit_model()
+        # Initialize and fit the SMBO
+        smbo = SequentialModelBasedOptimization(config_space, args.max_anchor_size)
 
-    performance_scores = []
-    for _ in range(args.num_iterations):
-        # Get the config with most improvement(hopefully)
-        promising_configuration= smbo.select_configuration()
-        promising_configuration_dict= dict(promising_configuration)
-        promising_configuration_dict["anchor_size"]= args.max_anchor_size
+        smbo.initialize(capital_phi)
+        smbo.fit_model()
 
-        # "Train" the config and get the score
-        config_performance= surrogate_model.predict(promising_configuration_dict)
-        performance_scores.append(config_performance)
-        smbo.update_runs((promising_configuration, config_performance))
-        print("DEBUG: ")
-        print(config_performance)
-        print(len(smbo.R))
+        performance_scores = []
+        
+        for _ in range(args.num_iterations):
+            # Get the config with most improvement(hopefully)
+            promising_configuration= smbo.select_configuration()
+            promising_configuration_dict= dict(promising_configuration)
+            promising_configuration_dict["anchor_size"]= args.max_anchor_size
 
-        # Plot the performance over iterations
+            # "Train" the config and get the score
+            config_performance= surrogate_model.predict(promising_configuration_dict)
+            if i == 0:
+                results['random_search'].append(min(results['random_search'][-1], config_performance))  
+            else:
+                performance_scores.append(config_performance)
+            smbo.update_runs((promising_configuration, config_performance))
+            print("DEBUG: ")
+            print(config_performance)
+            print(len(smbo.R))
+
+        if i!= 0:
+            all_perf_scores.append(performance_scores)
+
+    # Convert the list of performance scores to a NumPy array
+    perf_scores_array = np.array(all_perf_scores)
+
+    # Calculate the mean and variance across runs (axis 0 corresponds to the different runs)
+    mean_scores = np.mean(perf_scores_array, axis=0)
+    std_scores = np.std(perf_scores_array, axis=0)
+
+    # Create the plot
     plt.figure(figsize=(8, 6))
-    plt.plot(range(1, args.num_iterations + 1), performance_scores, marker='o')
+
+    # Plot the mean scores
+    plt.plot(mean_scores, label='Mean Performance')
+
+    # Plot the variance as a shaded area
+    plt.fill_between(range(len(mean_scores)),
+                    mean_scores - std_scores, 
+                    mean_scores + std_scores, 
+                    color='gray', alpha=0.2, label='Variance')
+
+    # Labels and title
     plt.xlabel('Iteration')
-    plt.ylabel('Performance')
-    plt.title('Performance Over Iterations')
-    plt.grid(True)
+    plt.ylabel('Performance Score')
+    plt.title('Performance over Iterations')
+    plt.legend()
+
+    # Show the plot
     plt.show()
+
+    ## PART 2 compare with random search
+    print("Comparing with random search")
+
+    plt.plot(range(len(results['random_search']) - 1), results['random_search'][1:])
+    plt.yscale('log')
+    plt.show()
+
 
 # Run the main function
 if __name__ == "__main__":

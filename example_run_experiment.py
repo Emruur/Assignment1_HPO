@@ -23,12 +23,11 @@ def run(args):
     random_search = RandomSearch(config_space)
     df = pd.read_csv(args.configurations_performance_file)
     surrogate_model = SurrogateModel(config_space)
-    surrogate_model.fit(df)
+    surrogate_model.fit(df, test= True)
     results = {
         'random_search': [1.0]
     }
 
-    ##TODO remove me
     best_performer= None,1
 
     for idx in range(args.num_iterations):
