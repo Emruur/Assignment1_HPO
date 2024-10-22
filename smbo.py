@@ -48,21 +48,19 @@ class SequentialModelBasedOptimization(object):
         :param capital_phi: a list of tuples, each tuple being a configuration and the performance (typically,
         error rate)
         """
-
+        capital_phi = [(config, 1 - score) for config, score in capital_phi]
         # Define the kernel
-        kernel = C(1.0, (1e-2, 1e2)) * RBF(1.0, (1e-2, 1e2))
 
         # Define    the pipeline with scaling
         self.gp_pipeline = Pipeline([
             ('config_transform', self.config_space_transformer),
             ('gp', GaussianProcessRegressor(
-                kernel=kernel, 
                 n_restarts_optimizer=10))
         ])
 
 
         # Find the tuple with the maximum performance score
-        best_run = min(capital_phi, key=lambda x: x[1])
+        best_run = max(capital_phi, key=lambda x: x[1])
         # Set the configuration with the maximum score
         self.theta_inc = best_run[0]
         self.theta_inc_performance = best_run[1]
@@ -116,7 +114,6 @@ class SequentialModelBasedOptimization(object):
             t_pd= pd.DataFrame([t.get_dictionary()])
             t_pd['anchor_size'] = anchor_size
             mean_x, confidence = model_pipeline.predict(t_pd, return_std=True)
-            mean_x *= -1
             Z= (f_star - mean_x - tradeoff) / confidence
             EI= mean_x - f_star- tradeoff * norm.cdf(Z) + confidence * norm.pdf(Z)
             expected_improvements.append(EI[0])
@@ -130,13 +127,14 @@ class SequentialModelBasedOptimization(object):
 
         :param run: A tuple (configuration, performance) where performance is error rate
         """
-        self.R.append(run)
+        transformed_run = (run[0], 1 - run[1])
+        self.R.append(transformed_run)
         self.fit_model()
         
-        run_score= run[1]
-        if run_score < self.theta_inc_performance:
-            self.theta_inc= run[0]
-            self.theta_inc_performance= run_score
+        run_score = transformed_run[1]
+        if run_score > self.theta_inc_performance:
+            self.theta_inc = run[0]
+            self.theta_inc_performance = run_score
 
 
 

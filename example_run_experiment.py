@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from random_search import RandomSearch
 from surrogate_model import SurrogateModel
+import numpy as np
 
 
 def parse_args():
@@ -15,6 +16,49 @@ def parse_args():
     parser.add_argument('--num_iterations', type=int, default=50)
 
     return parser.parse_args()
+
+def run_random_sampling_experiments(args, num_experiments=10):
+    config_space = ConfigSpace.ConfigurationSpace.from_json(args.config_space_file)
+    random_search = RandomSearch(config_space)
+    df = pd.read_csv(args.configurations_performance_file)
+    surrogate_model = SurrogateModel(config_space)
+    surrogate_model.fit(df, test=True)
+    
+    all_results = []
+
+    for experiment_idx in range(num_experiments):
+        results = []
+        for idx in range(args.num_iterations):
+            theta_new = dict(random_search.select_configuration())
+            theta_new['anchor_size'] = args.max_anchor_size
+            performance = surrogate_model.predict(theta_new)
+            results.append(performance)
+
+            random_search.update_runs((theta_new, performance))
+
+        all_results.append(results)
+
+    # Convert the results to a numpy array for easier computation of mean and variance
+    all_results = np.array(all_results)
+    
+    # Calculate the mean and variance of the experiments
+    mean_results = np.mean(all_results, axis=0)
+    std_results = np.std(all_results, axis=0)
+
+    # Plot the mean with variance bounds
+    plt.fill_between(range(args.num_iterations), 
+                     mean_results - std_results, 
+                     mean_results + std_results, 
+                     color='gray', alpha=0.3, label='Mean ± Variance')
+
+    # Plot the mean line
+    plt.plot(range(args.num_iterations), mean_results, color='black', label='Mean', linewidth=2)
+
+    plt.xlabel('Iterations')
+    plt.ylabel('Performance')
+    plt.yscale('log')
+    plt.legend()
+    plt.show()
 
 
 def run(args):
@@ -50,6 +94,9 @@ def run(args):
     plt.plot(range(len(results['random_search']) - 1), results['random_search'][1:])
     plt.yscale('log')
     plt.show()
+
+    run_random_sampling_experiments(args)
+
 
 
 
