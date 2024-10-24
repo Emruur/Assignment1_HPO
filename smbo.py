@@ -13,6 +13,12 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 from scipy.stats import norm
 
+def logit_transform(data, epsilon=1e-10):
+    data = np.array(data)
+    data = np.clip(data, epsilon, 1 - epsilon)
+    logit_data = np.log(data / (1 - data))
+    return logit_data
+
 def convert_to_dataframe(capital_phi):
     # Extract the list of dictionaries (X) and floats (y)
     X_dicts = [item[0] for item in capital_phi]
@@ -48,13 +54,15 @@ class SequentialModelBasedOptimization(object):
         :param capital_phi: a list of tuples, each tuple being a configuration and the performance (typically,
         error rate)
         """
-        capital_phi = [(config, 1 - score) for config, score in capital_phi]
+        capital_phi = [(config, logit_transform(1 - score)) for config, score in capital_phi]
         # Define the kernel
 
         # Define    the pipeline with scaling
+        kernel = C(1.0, (1e-2, 1e2)) * RBF(1.0, (1e-2, 1e2))
         self.gp_pipeline = Pipeline([
             ('config_transform', self.config_space_transformer),
             ('gp', GaussianProcessRegressor(
+                kernel=kernel, 
                 n_restarts_optimizer=10))
         ])
 
@@ -108,7 +116,7 @@ class SequentialModelBasedOptimization(object):
         :return: A size n vector, same size as each element representing the EI of a given
         configuration
         """
-        tradeoff= 0.1
+        tradeoff= 1
         expected_improvements= []
         for t in theta:
             t_pd= pd.DataFrame([t.get_dictionary()])
@@ -127,7 +135,7 @@ class SequentialModelBasedOptimization(object):
 
         :param run: A tuple (configuration, performance) where performance is error rate
         """
-        transformed_run = (run[0], 1 - run[1])
+        transformed_run = (run[0], logit_transform(1 - run[1]))
         self.R.append(transformed_run)
         self.fit_model()
         

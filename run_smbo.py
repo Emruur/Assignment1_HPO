@@ -22,6 +22,9 @@ warnings.filterwarnings("ignore", category=ConvergenceWarning)
 warnings.filterwarnings("ignore", message="lbfgs failed to converge")
 pd.set_option('future.no_silent_downcasting', True)
 
+
+
+
 def save_results(file_path, results):
     """
     Save the results to a file using pickle.
@@ -237,10 +240,11 @@ def create_capital_phi(model, config_space, anchor_size,n_samples: int = 100) ->
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_space_file', type=str, default='lcdb_config_space_knn.json')
-    parser.add_argument('--configurations_performance_file', type=str, default='lcdb_configs.csv')
+    parser.add_argument('--configurations_performance_file', type=str, default='config-performances/config_performances_dataset-1457.csv')
     # max_anchor_size: connected to the configurations_performance_file. The max value upon which anchors are sampled
     parser.add_argument('--max_anchor_size', type=int, default=1600)
-    parser.add_argument('--num_iterations', type=int, default=25)
+    parser.add_argument('--num_iterations', type=int, default=50)
+    parser.add_argument('--random_seed', type=int, default=42)  # Add this line
 
     return parser.parse_args()
 
@@ -249,16 +253,21 @@ def main(args):
     # File paths for dataset and config space (replace with correct paths)
     dataset_path = args.configurations_performance_file
     config_path = args.config_space_file
+    
 
     # Read the files
     dataset, config_space = read_files(dataset_path, config_path)
+
+    config_space.seed(args.random_seed)
+    random.seed(args.random_seed)
+    np.random.seed(args.random_seed)
 
     # Train the groundtruth surrogate model
     surrogate_model = SurrogateModel(config_space)
     surrogate_model.fit(dataset)
 
-    smbo_file_path = 'results2/smbo_results_1.pkl'
-    rs_file_path = 'results2/rs_results_1.pkl'
+    smbo_file_path = 'results_seed_7/smbo_results_1457.pkl'
+    rs_file_path = 'results_seed_7/rs_results_1457.pkl'
 
     # Try to load existing results
     smbo_results = load_results(smbo_file_path)
@@ -275,6 +284,7 @@ def main(args):
         rs_results = random_search_experiment(args, config_space, surrogate_model)
         save_results(rs_file_path, rs_results)
 
+    ## seed 2-6-7 -- 01
     compare_smbo_and_random_search(smbo_results, rs_results)
 
 # Run the main function
