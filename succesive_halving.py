@@ -49,7 +49,6 @@ class SuccesiveHalving:
         arms= self.arms
         S= self.config_space.sample_configuration(arms)
         S= [dict(conf) for conf in S]
-        total_budget= 0
 
         # Initialize variables
         halving_steps = math.ceil(math.log2(arms))
@@ -61,7 +60,7 @@ class SuccesiveHalving:
             budget = B / (len(S) * halving_steps) 
             if self.predefined_anchors:   
                 budget= self.predefined_anchors[i + 5]
-            total_budget += budget* len(S)
+
             [bandit.update({"anchor_size": budget}) for bandit in S]
             [bandit.update({"score": self.groundtruth.predict(bandit)}) for bandit in S]
 
@@ -71,10 +70,11 @@ class SuccesiveHalving:
             
             for idx, bandit in enumerate(S):
                 bandit_performance[idx].append(bandit["score"])
-            #print(f"Halving step {i} budget: {budget}")
+            print(f"Halving step {i} budget: {budget}")
             
             S = sorted(S, key=lambda x: x["score"])
             S = S[:math.ceil(len(S) / 2)]
+        print("Total budget: ", cumilative_budget[-1])
 
         best_score_so_far.pop(0)
         cumilative_budget.pop(0)
@@ -99,11 +99,14 @@ def main(args):
     
     # Budget
 
-    B= 120000
-    arms= 423
+    B= 90000
+    arms= 297
+    #arms= 600
     S= config_space.sample_configuration(arms)
     S= [dict(conf) for conf in S]
     anchors= [16, 23, 32, 45, 64, 91, 128, 181, 256, 362, 512, 724, 1024, 1200]
+
+    #anchors= None
     
     all_experiment_data = []
     for i in range(500):
