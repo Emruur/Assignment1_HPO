@@ -322,7 +322,7 @@ def main(args):
         save_results(rs_file_path, rs_results)
 
     if sh_results is None:
-        print("Fuck")
+        print("Done.")
         pass
 
     ## seed 2-6-7 -- 01
