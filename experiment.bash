@@ -4,7 +4,7 @@
 for seed in {1..10}
 do
     # Run the Python script with the current random seed
-    python run_smbo.py --random_seed $seed
+    python run_smbo.py --random_seed $seed --max_anchor_size 1200
     
     # Create a folder for the results based on the seed
     result_folder="results_seed_$seed"

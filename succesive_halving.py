@@ -7,7 +7,18 @@ from surrogate_model import SurrogateModel
 import argparse
 import matplotlib.pyplot as plt
 import math
+import pickle
 
+def save_experiment_data(data, filename="experiment_data.pkl"):
+    """Save experiment data to a pickle file."""
+    with open(filename, 'wb') as f:
+        pickle.dump(data, f)
+
+def load_experiment_data(filename="experiment_data.pkl"):
+    """Load experiment data from a pickle file."""
+
+    with open(filename, 'rb') as f:
+        return pickle.load(f)
 
 def read_files(dataset_path: str, config_path: str):
     # Read the dataset containing configurations and performance
@@ -23,12 +34,55 @@ def read_files(dataset_path: str, config_path: str):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_space_file', type=str, default='lcdb_config_space_knn.json')
-    parser.add_argument('--configurations_performance_file', type=str, default='lcdb_configs.csv')
-    # max_anchor_size: connected to the configurations_performance_file. The max value upon which anchors are sampled
-    parser.add_argument('--max_anchor_size', type=int, default=1600)
-    parser.add_argument('--num_iterations', type=int, default=25)
-
+    parser.add_argument('--configurations_performance_file', type=str, default='config-performances/config_performances_dataset-1457.csv')
     return parser.parse_args()
+
+class SuccesiveHalving:
+    def __init__(self, arms, budget, groundtruth,config_space,predefined_anchors= None) -> None:
+        self.arms= arms
+        self.budget= budget
+        self.predefined_anchors= predefined_anchors
+        self.groundtruth= groundtruth
+        self.config_space= config_space
+    def run(self):
+        B= self.budget
+        arms= self.arms
+        S= self.config_space.sample_configuration(arms)
+        S= [dict(conf) for conf in S]
+        total_budget= 0
+
+        # Initialize variables
+        halving_steps = math.ceil(math.log2(arms))
+        bandit_performance = {i: [] for i in range(len(S))}  
+        best_score_so_far= [1]
+        cumilative_budget= [0]
+
+        for i in range(halving_steps):
+            budget = B / (len(S) * halving_steps) 
+            if self.predefined_anchors:   
+                budget= self.predefined_anchors[i + 4]
+            total_budget += budget* len(S)
+            [bandit.update({"anchor_size": budget}) for bandit in S]
+            [bandit.update({"score": self.groundtruth.predict(bandit)}) for bandit in S]
+
+            best_score = max(bandit["score"] for bandit in S)
+            best_score_so_far.append(min(best_score_so_far[-1], best_score))
+            cumilative_budget.append(cumilative_budget[-1] + budget* len(S))
+            
+            for idx, bandit in enumerate(S):
+                bandit_performance[idx].append(bandit["score"])
+            print(f"Halving step {i} budget: {budget}")
+            
+            S = sorted(S, key=lambda x: x["score"])
+            S = S[:math.ceil(len(S) / 2)]
+
+        best_score_so_far.pop(0)
+        cumilative_budget.pop(0)
+
+        return bandit_performance, best_score_so_far, cumilative_budget
+
+
+
 
 # Main function to run the steps
 def main(args):
@@ -45,52 +99,57 @@ def main(args):
     
     # Budget
 
-    B= 100000
-    arms= 1000
+    B= 120000
+    arms= 1400
     S= config_space.sample_configuration(arms)
     S= [dict(conf) for conf in S]
+    anchors= [16, 23, 32, 45, 64, 91, 128, 181, 256, 362, 512, 724, 1024, 1200]
+    
+    all_experiment_data = []
+    for i in range(500):
+        sh_instance= SuccesiveHalving(arms, B, surrogate_model, config_space)
+        bandit_performance, best_so_far, cumulative_budget= sh_instance.run()
+        ## write all experiment data to a pkl file a
+        experiment_data = {
+            "bandit_performance": bandit_performance,
+            "best_so_far": best_so_far,
+            "cumulative_budget": cumulative_budget
+        }
+        print(f"Experiment {i} finished.")
 
-    # Initialize variables
-    halving_steps = math.ceil(math.log2(arms))
-    bandit_performance = {i: [] for i in range(len(S))}  # Track performance of each bandit
+        all_experiment_data.append(experiment_data)
 
-    for i in range(halving_steps):
-        budget = B / (len(S) * halving_steps)    
-        [bandit.update({"anchor_size": budget}) for bandit in S]
-        [bandit.update({"score": surrogate_model.predict(bandit)}) for bandit in S]
-        
-        for idx, bandit in enumerate(S):
-            bandit_performance[idx].append(bandit["score"])
-        
-        S = sorted(S, key=lambda x: x["score"])
-        print("-----------------",i)
-        for i,s in enumerate(S):
-            print(f"{i}: {s['score']}")
 
-        S = S[:math.ceil(len(S) / 2)]
-        for i,s in enumerate(S):
-            print(f"{i}: {s['score']}")
+    save_experiment_data(all_experiment_data, filename="sh_1000_pre_anchors")
+
+    exit()
 
     # Plot the performance of each bandit over the halving steps
     for bandit_id, scores in bandit_performance.items():
         plt.plot(range(len(scores)), scores, marker='o', label=f'Bandit {bandit_id}')
+        
+    
+    
+
 
     plt.xlabel('Halving Step')
     plt.ylabel('Score')
     plt.title('Performance of Each Bandit in Successive Halving')
     plt.grid(True)
-    plt.legend()
+    plt.show()
+
+
+    # Plotting Budget Spent vs. Best Score Found So Far
+    plt.plot(cumulative_budget, best_so_far, marker='o')
+    plt.xlabel("Cumulative Budget Spent")
+    plt.ylabel("Best Score Found So Far")
+    plt.title("Budget Spent vs. Best Score Found So Far")
+    plt.grid(True)
     plt.show()
 
 
 
 
-
-
-
-
-
-        
 
 
 

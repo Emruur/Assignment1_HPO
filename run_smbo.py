@@ -22,9 +22,6 @@ warnings.filterwarnings("ignore", category=ConvergenceWarning)
 warnings.filterwarnings("ignore", message="lbfgs failed to converge")
 pd.set_option('future.no_silent_downcasting', True)
 
-
-
-
 def save_results(file_path, results):
     """
     Save the results to a file using pickle.
@@ -47,12 +44,16 @@ def load_results(file_path):
             return pickle.load(file)
     return None
 
-def random_search_experiment(args, config_space,groundtruth, n_runs= 10) -> list[list[float]]:
+def random_search_experiment(args, config_space,groundtruth, n_runs= 10, num_iterations= None) -> list[list[float]]:
+    num_iter= args.num_iterations
+    if num_iterations != None:
+        num_iter = num_iterations
     random_search = RandomSearch(config_space)
     run_results= []
-    for _ in range(n_runs):
+    for i in range(n_runs):
+        print(f"starting rs run {i}")
         run_result= []
-        for idx in range(args.num_iterations):
+        for idx in range(num_iter):
             theta_new = dict(random_search.select_configuration())
             # Check if any value in theta_new is None
             theta_new['anchor_size'] = args.max_anchor_size
@@ -65,7 +66,8 @@ def random_search_experiment(args, config_space,groundtruth, n_runs= 10) -> list
 
 def smbo_experiment(args, config_space,groundtruth, n_runs= 10) -> list[list[float]]:
     all_perf_scores= []
-    for _ in range(n_runs):
+    for i in range(n_runs):
+        print(f"starting smbo run {i}")
 
         capital_phi = create_capital_phi(groundtruth,config_space,args.max_anchor_size, n_samples=25)
 
@@ -227,7 +229,6 @@ def create_capital_phi(model, config_space, anchor_size,n_samples: int = 100) ->
     for conf in configurations:
         # Convert the configuration to a dictionary
         config_dict = dict(conf)
-        ## TODO ANCHOR SIZE
         # Predict the performance of the configuration using the surrogate model
         config_dict["anchor_size"]= anchor_size
         config_performance = model.predict(config_dict)
@@ -266,8 +267,8 @@ def main(args):
     surrogate_model = SurrogateModel(config_space)
     surrogate_model.fit(dataset)
 
-    smbo_file_path = 'results_seed_7/smbo_results_1457.pkl'
-    rs_file_path = 'results_seed_7/rs_results_1457.pkl'
+    smbo_file_path = 'smbo_results_1457.pkl'
+    rs_file_path = 'experiment/rs_results_1457.pkl'
 
     # Try to load existing results
     smbo_results = load_results(smbo_file_path)
@@ -276,15 +277,16 @@ def main(args):
     # If results do not exist, run the experiments and save the results
     if smbo_results is None:
         print("Running SMBO experiment...")
-        smbo_results = smbo_experiment(args, config_space, surrogate_model)
+        smbo_results = smbo_experiment(args, config_space, surrogate_model, n_runs=500)
         save_results(smbo_file_path, smbo_results)
 
     if rs_results is None:
         print("Running Random Search experiment...")
-        rs_results = random_search_experiment(args, config_space, surrogate_model)
+        rs_results = random_search_experiment(args, config_space, surrogate_model, num_iterations=75, n_runs= 500)
         save_results(rs_file_path, rs_results)
 
     ## seed 2-6-7 -- 01
+    ## 2-7- 1200
     compare_smbo_and_random_search(smbo_results, rs_results)
 
 # Run the main function
