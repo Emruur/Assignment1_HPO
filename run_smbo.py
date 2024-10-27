@@ -23,22 +23,10 @@ warnings.filterwarnings("ignore", message="lbfgs failed to converge")
 pd.set_option('future.no_silent_downcasting', True)
 
 def save_results(file_path, results):
-    """
-    Save the results to a file using pickle.
-    
-    :param file_path: Path to the file where results will be saved.
-    :param results: The results to be saved (e.g., smbo_results or rs_results).
-    """
     with open(file_path, 'wb') as file:
         pickle.dump(results, file)
 
 def load_results(file_path):
-    """
-    Load the results from a file if they exist.
-    
-    :param file_path: Path to the file where results are saved.
-    :return: The loaded results if the file exists, otherwise None.
-    """
     if os.path.exists(file_path):
         with open(file_path, 'rb') as file:
             return pickle.load(file)
@@ -233,6 +221,145 @@ def compare_smbo_rs_sh(smbo_scores: list[list[float]], random_search_scores: lis
     plt.grid(True)
     plt.show()
 
+
+
+
+def compare_min_smbo_rs_sh(smbo_scores: List[List[float]], random_search_scores: List[List[float]], sh_results: List[Dict], num_permutations: int = 1000):
+    """
+    Computes and plots cluster statistics (mean, variance, min, max) and win percentages for SMBO, RS, and SH,
+    including pairwise comparisons averaged over multiple random permutations. Displays both a scatter plot for 
+    individual best scores and a bar plot for mean and variance.
+
+    :param smbo_scores: A list of lists where each inner list represents the performance scores for SMBO over iterations.
+    :param random_search_scores: A list of lists where each inner list represents the performance scores for Random Search over iterations.
+    :param sh_results: List of dictionaries, where each dictionary contains `best_so_far` scores for each Successive Halving run.
+    :param num_permutations: Number of random permutations to perform for robust averaging.
+    """
+    # Extract best scores for each method
+    smbo_best_scores = [min(scores) for scores in smbo_scores]
+    rs_best_scores = [min(scores) for scores in random_search_scores]
+    sh_best_scores = [min(run['best_so_far']) for run in sh_results]
+
+    # Initialize lists to gather scores across all permutations
+    smbo_all_scores, rs_all_scores, sh_all_scores = [], [], []
+    win_counts = {'SMBO': 0, 'RS': 0, 'SH': 0}
+    pairwise_counts = {
+        'SMBO_vs_RS': {'SMBO_wins': 0, 'RS_wins': 0},
+        'SMBO_vs_SH': {'SMBO_wins': 0, 'SH_wins': 0},
+        'RS_vs_SH': {'RS_wins': 0, 'SH_wins': 0}
+    }
+
+    # Collect scores across all permutations for accurate variance calculation
+    for _ in range(num_permutations):
+        random.shuffle(smbo_best_scores)
+        random.shuffle(rs_best_scores)
+        random.shuffle(sh_best_scores)
+
+        smbo_all_scores.extend(smbo_best_scores)
+        rs_all_scores.extend(rs_best_scores)
+        sh_all_scores.extend(sh_best_scores)
+
+        # Count wins for each method in this permutation
+        for smbo, rs, sh in zip(smbo_best_scores, rs_best_scores, sh_best_scores):
+            min_score = min(smbo, rs, sh)
+            if min_score == smbo:
+                win_counts['SMBO'] += 1
+            elif min_score == rs:
+                win_counts['RS'] += 1
+            else:
+                win_counts['SH'] += 1
+
+            # Pairwise comparisons
+            if smbo < rs:
+                pairwise_counts['SMBO_vs_RS']['SMBO_wins'] += 1
+            else:
+                pairwise_counts['SMBO_vs_RS']['RS_wins'] += 1
+
+            if smbo < sh:
+                pairwise_counts['SMBO_vs_SH']['SMBO_wins'] += 1
+            else:
+                pairwise_counts['SMBO_vs_SH']['SH_wins'] += 1
+
+            if rs < sh:
+                pairwise_counts['RS_vs_SH']['RS_wins'] += 1
+            else:
+                pairwise_counts['RS_vs_SH']['SH_wins'] += 1
+
+    # Compute final statistics from aggregated data
+    smbo_stats = {
+        'mean': np.mean(smbo_all_scores),
+        'variance': np.var(smbo_all_scores),
+        'min': min(smbo_all_scores),
+        'max': max(smbo_all_scores)
+    }
+    rs_stats = {
+        'mean': np.mean(rs_all_scores),
+        'variance': np.var(rs_all_scores),
+        'min': min(rs_all_scores),
+        'max': max(rs_all_scores)
+    }
+    sh_stats = {
+        'mean': np.mean(sh_all_scores),
+        'variance': np.var(sh_all_scores),
+        'min': min(sh_all_scores),
+        'max': max(sh_all_scores)
+    }
+
+    # Calculate win percentages
+    total_comparisons = num_permutations * len(smbo_best_scores)
+    win_percentages = {method: (count / total_comparisons) * 100 for method, count in win_counts.items()}
+
+    # Calculate pairwise win percentages
+    for pair, counts in pairwise_counts.items():
+        total_pairwise_comparisons = counts.get('SMBO_wins', 0) + counts.get('RS_wins', 0) + counts.get('SH_wins', 0)
+        pairwise_counts[pair]['SMBO_win_percent'] = (counts.get('SMBO_wins', 0) / total_pairwise_comparisons) * 100
+        pairwise_counts[pair]['RS_win_percent'] = (counts.get('RS_wins', 0) / total_pairwise_comparisons) * 100
+        if 'SH_wins' in counts:
+            pairwise_counts[pair]['SH_win_percent'] = (counts.get('SH_wins', 0) / total_pairwise_comparisons) * 100
+
+    # Print results in a nicely formatted way
+    print("Statistics Summary:")
+    for method, stats in zip(['SMBO', 'RS', 'SH'], [smbo_stats, rs_stats, sh_stats]):
+        print(f"{method} - Mean: {stats['mean']:.4f}, Variance: {stats['variance']:.8f}, "
+              f"Min: {stats['min']:.4f}, Max: {stats['max']:.4f}")
+    print("\nWin Percentages:")
+    for method, percentage in win_percentages.items():
+        print(f"{method}: {percentage:.2f}%")
+    print("\nPairwise Comparisons:")
+    for pair, counts in pairwise_counts.items():
+        print(f"{pair} - SMBO Wins: {counts.get('SMBO_win_percent', 0):.2f}%, "
+              f"RS Wins: {counts.get('RS_win_percent', 0):.2f}%, "
+              f"SH Wins: {counts.get('SH_win_percent', 0):.2f}%")
+
+    # Plot the scatter plot of best scores for each method
+    jitter_strength = 0.02
+    smbo_x = np.ones(len(smbo_best_scores)) + np.random.normal(0, jitter_strength, len(smbo_best_scores))
+    rs_x = np.ones(len(rs_best_scores)) * 2 + np.random.normal(0, jitter_strength, len(rs_best_scores))
+    sh_x = np.ones(len(sh_best_scores)) * 3 + np.random.normal(0, jitter_strength, len(sh_best_scores))
+
+    plt.figure(figsize=(10, 6))
+    plt.scatter(smbo_x, smbo_best_scores, label='SMBO', color='blue', alpha=0.6)
+    plt.scatter(rs_x, rs_best_scores, label='Random Search', color='green', alpha=0.6)
+    plt.scatter(sh_x, sh_best_scores, label='Successive Halving', color='red', alpha=0.6)
+    plt.xticks([1, 2, 3], ['SMBO', 'RS', 'SH'])
+    plt.ylabel('Best Found Score')
+    plt.title('Best Found Scores Across SMBO, RS, and SH Clusters')
+    plt.legend()
+    plt.show()
+
+    # Plot the bar plot for mean and variance
+    means = [smbo_stats['mean'], rs_stats['mean'], sh_stats['mean']]
+    variances = [smbo_stats['variance'], rs_stats['variance'], sh_stats['variance']]
+    methods = ['SMBO', 'RS', 'SH']
+
+    plt.figure(figsize=(10, 6))
+    plt.bar(methods, means, yerr=np.sqrt(variances), capsize=5, color=['blue', 'green', 'red'])
+    plt.ylabel('Mean Best Found Score (±Variance)')
+    plt.title('Mean and Variance of Best Found Scores for SMBO, RS, and SH')
+    plt.show()
+
+
+
 def read_files(dataset_path: str, config_path: str):
     # Read the dataset containing configurations and performance
     dataset = pd.read_csv(dataset_path)
@@ -274,9 +401,9 @@ def create_capital_phi(model, config_space, anchor_size,n_samples: int = 100) ->
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_space_file', type=str, default='lcdb_config_space_knn.json')
-    parser.add_argument('--configurations_performance_file', type=str, default='config-performances/config_performances_dataset-6.csv')
+    parser.add_argument('--configurations_performance_file', type=str, default='config-performances/config_performances_dataset-1457.csv')
     # max_anchor_size: connected to the configurations_performance_file. The max value upon which anchors are sampled
-    parser.add_argument('--max_anchor_size', type=int, default=1600)
+    parser.add_argument('--max_anchor_size', type=int, default=1200)
     parser.add_argument('--num_iterations', type=int, default=50)
     parser.add_argument('--random_seed', type=int, default=42)  # Add this line
 
@@ -300,9 +427,9 @@ def main(args):
     surrogate_model = SurrogateModel(config_space)
     surrogate_model.fit(dataset)
 
-    smbo_file_path = 'smbo_results_100_1200_6.pkl'
-    rs_file_path = 'rs_results_500_1200_6.pkl'
-    sh_file_path= 'sh_1000_pre_anchors.pkl'
+    smbo_file_path = 'experiment/smbo_results_500_1200.pkl'
+    rs_file_path = 'experiment/rs_results_500_1200.pkl'
+    sh_file_path= 'experiment/sh_500_pre_anchors.pkl'
 
 
     # Try to load existing results
@@ -327,7 +454,8 @@ def main(args):
 
     ## seed 2-6-7 -- 01
     ## 2-7- 1200
-    #compare_smbo_rs_sh(smbo_results, rs_results, sh_results)
+    compare_smbo_rs_sh(smbo_results, rs_results, sh_results)
+    compare_min_smbo_rs_sh(smbo_results, rs_results, sh_results, num_permutations=1000)
 
 # Run the main function
 if __name__ == "__main__":
