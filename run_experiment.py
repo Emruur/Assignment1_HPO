@@ -23,15 +23,6 @@ warnings.filterwarnings("ignore", category=ConvergenceWarning)
 warnings.filterwarnings("ignore", message="lbfgs failed to converge")
 pd.set_option('future.no_silent_downcasting', True)
 
-def save_results(file_path, results):
-    with open(file_path, 'wb') as file:
-        pickle.dump(results, file)
-
-def load_results(file_path):
-    if os.path.exists(file_path):
-        with open(file_path, 'rb') as file:
-            return pickle.load(file)
-    return None
 
 def random_search_experiment(args, config_space,groundtruth, n_runs= 10, num_iterations= None) -> list[list[float]]:
     num_iter= args.num_iterations
@@ -82,10 +73,23 @@ def smbo_experiment(args, config_space,groundtruth, n_runs= 10) -> list[list[flo
         all_perf_scores.append(performance_scores)
     return all_perf_scores
 
-def run_successive_halving(args, config_space, groundtruth, arms= 1, budget= 90000, predefined_anchors=[16, 23, 32, 45, 64, 91, 128, 181, 256, 362, 512, 724, 1024, 1200]):
-    sh= SuccesiveHalving(arms, budget, groundtruth,config_space,predefined_anchors)
-    sh.run()
-    return sh
+def run_successive_halving(n_runs, config_space, groundtruth, arms= 297, B= 90000, predefined_anchors=[16, 23, 32, 45, 64, 91, 128, 181, 256, 362, 512, 724, 1024, 1200]):
+    all_experiment_data = []
+    for i in range(n_runs):
+        print(f"starting sh run {i}")
+        sh_instance= SuccesiveHalving(arms, B, groundtruth, config_space,predefined_anchors=predefined_anchors)
+        bandit_performance, best_so_far, cumulative_budget= sh_instance.run()
+        ## write all experiment data to a pkl file a
+        experiment_data = {
+            "bandit_performance": bandit_performance,
+            "best_so_far": best_so_far,
+            "cumulative_budget": cumulative_budget
+        }
+        print(f"Experiment {i} finished.")
+        all_experiment_data.append(experiment_data)
+
+    return all_experiment_data
+
 
 def compare_smbo_rs_sh(smbo_scores: list[list[float]], random_search_scores: list[list[float]], sh_results: list[dict]):
     """
@@ -404,15 +408,12 @@ def create_capital_phi(model, config_space, anchor_size,n_samples: int = 100) ->
     
     return capital_phi
 
-
-    
-
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_space_file', type=str, default='lcdb_config_space_knn.json')
-    parser.add_argument('--configurations_performance_file', type=str, default='lcdb_configs.csv')
+    parser.add_argument('--configurations_performance_file', type=str, default='config-performances/config_performances_dataset-1457.csv')
     # max_anchor_size: connected to the configurations_performance_file. The max value upon which anchors are sampled
-    parser.add_argument('--max_anchor_size', type=int, default=1600)
+    parser.add_argument('--max_anchor_size', type=int, default=1200)
     parser.add_argument('--num_iterations', type=int, default=50)
     parser.add_argument('--random_seed', type=int, default=42)  # Add this line
 
@@ -423,7 +424,6 @@ def main(args):
     # File paths for dataset and config space (replace with correct paths)
     dataset_path = args.configurations_performance_file
     config_path = args.config_space_file
-    
 
     # Read the files
     dataset, config_space = read_files(dataset_path, config_path)
@@ -436,38 +436,20 @@ def main(args):
     surrogate_model = SurrogateModel(config_space)
     surrogate_model.fit(dataset)
 
-    smbo_file_path = 'smbo_results_500_1600.pkl'
-    rs_file_path = 'rs_results_500_1600.pkl'
-    sh_file_path= 'sh_500_pre_anchors.pkl'
+    print("Running SMBO experiment...")
+    smbo_results = smbo_experiment(args, config_space, surrogate_model, n_runs=5)
 
 
-    # Try to load existing results
-    smbo_results = load_results(smbo_file_path)
-    rs_results = load_results(rs_file_path)
-    sh_results= load_results(sh_file_path)
+    print("Running Random Search experiment...")
+    rs_results = random_search_experiment(args, config_space, surrogate_model, num_iterations=75, n_runs= 5)
 
-    #SuccesiveHalving(arms=1, budget=90000, groundtruth=surrogate_model, config_space=config_space, predefined_anchors=[16, 23, 32, 45, 64, 91, 128, 181, 256, 362, 512, 724, 1024, 1200])
-    #print("Running Successive Halving experiment...")
-   
-    # If results do not exist, run the experiments and save the results
-    if smbo_results is None:
-        print("Running SMBO experiment...")
-        smbo_results = smbo_experiment(args, config_space, surrogate_model, n_runs=100)
-        save_results(smbo_file_path, smbo_results)
 
-    if rs_results is None:
-        print("Running Random Search experiment...")
-        rs_results = random_search_experiment(args, config_space, surrogate_model, num_iterations=75, n_runs= 100)
-        save_results(rs_file_path, rs_results)
+    sh_results= run_successive_halving(n_runs= 5, groundtruth= surrogate_model, config_space= config_space)
+    print("Running Successive Halving experiment...")
 
-    if sh_results is None:
-        print("Fuck")
-        pass
 
-    ## seed 2-6-7 -- 01
-    ## 2-7- 1200
-    ##compare_smbo_rs_sh(smbo_results, rs_results, sh_results)
-    ##compare_min_smbo_rs_sh(smbo_results, rs_results, sh_results, num_permutations=1000)
+    compare_smbo_rs_sh(smbo_results, rs_results, sh_results)
+    compare_min_smbo_rs_sh(smbo_results, rs_results, sh_results, num_permutations=1000)
 
 # Run the main function
 if __name__ == "__main__":
