@@ -401,9 +401,9 @@ def create_capital_phi(model, config_space, anchor_size,n_samples: int = 100) ->
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_space_file', type=str, default='lcdb_config_space_knn.json')
-    parser.add_argument('--configurations_performance_file', type=str, default='config-performances/config_performances_dataset-1457.csv')
+    parser.add_argument('--configurations_performance_file', type=str, default='lcdb_configs.csv')
     # max_anchor_size: connected to the configurations_performance_file. The max value upon which anchors are sampled
-    parser.add_argument('--max_anchor_size', type=int, default=1200)
+    parser.add_argument('--max_anchor_size', type=int, default=1600)
     parser.add_argument('--num_iterations', type=int, default=50)
     parser.add_argument('--random_seed', type=int, default=42)  # Add this line
 
@@ -427,8 +427,8 @@ def main(args):
     surrogate_model = SurrogateModel(config_space)
     surrogate_model.fit(dataset)
 
-    smbo_file_path = 'smbo_results_500_1200.pkl'
-    rs_file_path = 'rs_results_500_1200.pkl'
+    smbo_file_path = 'smbo_results_500_1600.pkl'
+    rs_file_path = 'rs_results_500_1600.pkl'
     sh_file_path= 'sh_500_pre_anchors.pkl'
 
 
