@@ -107,7 +107,7 @@ def main(args):
     
     all_experiment_data = []
     for i in range(500):
-        sh_instance= SuccesiveHalving(arms, B, surrogate_model, config_space)
+        sh_instance= SuccesiveHalving(arms, B, surrogate_model, config_space,predefined_anchors=anchors)
         bandit_performance, best_so_far, cumulative_budget= sh_instance.run()
         ## write all experiment data to a pkl file a
         experiment_data = {

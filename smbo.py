@@ -1,26 +1,13 @@
 import ConfigSpace
 import numpy as np
 import typing
-
 from sklearn.pipeline import Pipeline
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 from ConfigConverter import ConfigSpaceTransformer
 from sklearn.model_selection import train_test_split
-
-
-
 import pandas as pd
 from scipy.stats import norm
-
-'''
-def logit_transform(data, epsilon=1e-10):
-    data = np.array(data)
-    data = np.clip(data, epsilon, 1 - epsilon)
-    logit_data = np.log(data / (1 - data))
-    return logit_data
-
-'''
 
 def convert_to_dataframe(capital_phi):
     # Extract the list of dictionaries (X) and floats (y)
@@ -109,30 +96,28 @@ class SequentialModelBasedOptimization(object):
     @staticmethod
     def expected_improvement(model_pipeline: Pipeline, f_star: float, theta: np.array, anchor_size) -> np.array:
         """
-        Acquisition function that determines which configurations are good and which
-        are not good.
-
+        Expected Improvement function without tradeoff.
+        
         :param model_pipeline: The internal surrogate model (should be fitted already)
         :param f_star: The current incumbent (theta_inc)
         :param theta: A (n, m) array, each column represents a hyperparameter and each row
         represents a configuration
-        :return: A size n vector, same size as each element representing the EI of a given
-        configuration
+        :param anchor_size: Anchor size for the configurations
+        :return: A size n vector, each element representing the EI of a given configuration
         """
         expected_improvements = []
-        tradeoff= 0.1
         for t in theta:
             t_pd = pd.DataFrame([t.get_dictionary()])
             t_pd['anchor_size'] = anchor_size
             mean_x, confidence = model_pipeline.predict(t_pd, return_std=True)
 
-            # Adjust Z calculation with the tradeoff parameter
-            Z = (f_star - mean_x - tradeoff) / confidence
-            EI = (mean_x - f_star - tradeoff) * norm.cdf(Z) + confidence * norm.pdf(Z)
+            # Calculate Z without tradeoff
+            Z = (f_star - mean_x) / confidence
+            EI = (mean_x - f_star) * norm.cdf(Z) + confidence * norm.pdf(Z)
             
             expected_improvements.append(EI[0])
 
-        return expected_improvements
+        return np.array(expected_improvements)
 
     def update_runs(self, run: typing.Tuple[typing.Dict, float]):
         """
