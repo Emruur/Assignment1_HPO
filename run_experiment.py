@@ -14,6 +14,7 @@ import warnings
 from sklearn.exceptions import ConvergenceWarning
 import pickle
 import os
+from succesive_halving import SuccesiveHalving
 
 # Suppress specific warnings
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
@@ -80,6 +81,11 @@ def smbo_experiment(args, config_space,groundtruth, n_runs= 10) -> list[list[flo
 
         all_perf_scores.append(performance_scores)
     return all_perf_scores
+
+def run_successive_halving(args, config_space, groundtruth, arms= 1, budget= 90000, predefined_anchors=[16, 23, 32, 45, 64, 91, 128, 181, 256, 362, 512, 724, 1024, 1200]):
+    sh= SuccesiveHalving(arms, budget, groundtruth,config_space,predefined_anchors)
+    sh.run()
+    return sh
 
 def compare_smbo_rs_sh(smbo_scores: list[list[float]], random_search_scores: list[list[float]], sh_results: list[dict]):
     """
@@ -398,6 +404,9 @@ def create_capital_phi(model, config_space, anchor_size,n_samples: int = 100) ->
     
     return capital_phi
 
+
+    
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_space_file', type=str, default='lcdb_config_space_knn.json')
@@ -437,6 +446,9 @@ def main(args):
     rs_results = load_results(rs_file_path)
     sh_results= load_results(sh_file_path)
 
+    #SuccesiveHalving(arms=1, budget=90000, groundtruth=surrogate_model, config_space=config_space, predefined_anchors=[16, 23, 32, 45, 64, 91, 128, 181, 256, 362, 512, 724, 1024, 1200])
+    #print("Running Successive Halving experiment...")
+   
     # If results do not exist, run the experiments and save the results
     if smbo_results is None:
         print("Running SMBO experiment...")

@@ -101,12 +101,12 @@ def main(args):
 
     B= 90000
     arms= 297
-    #arms= 600
+    arms= 600
     S= config_space.sample_configuration(arms)
     S= [dict(conf) for conf in S]
     anchors= [16, 23, 32, 45, 64, 91, 128, 181, 256, 362, 512, 724, 1024, 1200]
 
-    #anchors= None
+    anchors= None
     
     all_experiment_data = []
     for i in range(500):
