@@ -60,7 +60,7 @@ class SuccesiveHalving:
         for i in range(halving_steps):
             budget = B / (len(S) * halving_steps) 
             if self.predefined_anchors:   
-                budget= self.predefined_anchors[i + 4]
+                budget= self.predefined_anchors[i + 5]
             total_budget += budget* len(S)
             [bandit.update({"anchor_size": budget}) for bandit in S]
             [bandit.update({"score": self.groundtruth.predict(bandit)}) for bandit in S]
