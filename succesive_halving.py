@@ -71,7 +71,7 @@ class SuccesiveHalving:
             
             for idx, bandit in enumerate(S):
                 bandit_performance[idx].append(bandit["score"])
-            print(f"Halving step {i} budget: {budget}")
+            #print(f"Halving step {i} budget: {budget}")
             
             S = sorted(S, key=lambda x: x["score"])
             S = S[:math.ceil(len(S) / 2)]
@@ -100,7 +100,7 @@ def main(args):
     # Budget
 
     B= 120000
-    arms= 1400
+    arms= 423
     S= config_space.sample_configuration(arms)
     S= [dict(conf) for conf in S]
     anchors= [16, 23, 32, 45, 64, 91, 128, 181, 256, 362, 512, 724, 1024, 1200]
@@ -116,11 +116,10 @@ def main(args):
             "cumulative_budget": cumulative_budget
         }
         print(f"Experiment {i} finished.")
-
         all_experiment_data.append(experiment_data)
 
 
-    save_experiment_data(all_experiment_data, filename="sh_1000_pre_anchors")
+    save_experiment_data(all_experiment_data, filename="sh_500_pre_anchors")
 
     exit()
 

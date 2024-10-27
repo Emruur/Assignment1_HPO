@@ -23,22 +23,10 @@ warnings.filterwarnings("ignore", message="lbfgs failed to converge")
 pd.set_option('future.no_silent_downcasting', True)
 
 def save_results(file_path, results):
-    """
-    Save the results to a file using pickle.
-    
-    :param file_path: Path to the file where results will be saved.
-    :param results: The results to be saved (e.g., smbo_results or rs_results).
-    """
     with open(file_path, 'wb') as file:
         pickle.dump(results, file)
 
 def load_results(file_path):
-    """
-    Load the results from a file if they exist.
-    
-    :param file_path: Path to the file where results are saved.
-    :return: The loaded results if the file exists, otherwise None.
-    """
     if os.path.exists(file_path):
         with open(file_path, 'rb') as file:
             return pickle.load(file)
@@ -439,9 +427,9 @@ def main(args):
     surrogate_model = SurrogateModel(config_space)
     surrogate_model.fit(dataset)
 
-    smbo_file_path = 'experiment/smbo_results_500_1600.pkl'
-    rs_file_path = 'experiment/rs_results_500_1600.pkl'
-    sh_file_path= 'experiment/sh_500_pre_anchors.pkl'
+    smbo_file_path = 'smbo_results_500_1200.pkl'
+    rs_file_path = 'rs_results_500_1200.pkl'
+    sh_file_path= 'sh_500_pre_anchors.pkl'
 
 
     # Try to load existing results
@@ -452,12 +440,12 @@ def main(args):
     # If results do not exist, run the experiments and save the results
     if smbo_results is None:
         print("Running SMBO experiment...")
-        smbo_results = smbo_experiment(args, config_space, surrogate_model, n_runs=500)
+        smbo_results = smbo_experiment(args, config_space, surrogate_model, n_runs=100)
         save_results(smbo_file_path, smbo_results)
 
     if rs_results is None:
         print("Running Random Search experiment...")
-        rs_results = random_search_experiment(args, config_space, surrogate_model, num_iterations=75, n_runs= 500)
+        rs_results = random_search_experiment(args, config_space, surrogate_model, num_iterations=75, n_runs= 100)
         save_results(rs_file_path, rs_results)
 
     if sh_results is None:
@@ -466,8 +454,8 @@ def main(args):
 
     ## seed 2-6-7 -- 01
     ## 2-7- 1200
-    compare_smbo_rs_sh(smbo_results, rs_results, sh_results)
-    compare_min_smbo_rs_sh(smbo_results, rs_results, sh_results, num_permutations=1000)
+    ##compare_smbo_rs_sh(smbo_results, rs_results, sh_results)
+    ##compare_min_smbo_rs_sh(smbo_results, rs_results, sh_results, num_permutations=1000)
 
 # Run the main function
 if __name__ == "__main__":
